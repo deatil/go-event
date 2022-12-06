@@ -68,6 +68,13 @@ func TestEventStruct(data TestEventStructData, name any) {
     logger.New().Info(name)
 }
 
+type TestEventStructHandle struct {}
+
+func (this *TestEventStructHandle) Handle(data any) {
+    logger.New().Info("7-TestEventStructHandle: ")
+    logger.New().Info(data)
+}
+
 func main() {
     // 事件注册
     event.Listen("data.error", func(data any) {
@@ -105,6 +112,13 @@ func main() {
         Data: eventData2,
     })
 
+    // ==================
+
+    // 事件注册
+    event.Listen("TestEventStructHandle", &TestEventStructHandle{})
+
+    // 事件触发
+    event.Dispatch("TestEventStructHandle", eventData)
 }
 
 ~~~
