@@ -72,7 +72,7 @@ func main() {
 
     // 事件订阅
     event.Subscribe(&TestEvent{})
-    event.Subscribe(TestEventPrefix{})
+    event.Subscribe(&TestEventPrefix{})
     event.Subscribe(&TestEventSubscribe{})
 
     // 事件订阅触发
