@@ -318,13 +318,13 @@ func (this *Events) formatEventHandler(handler any) *EventListener {
             }
 
         default:
-            fnType := reflect.TypeOf(fn)
+            fnKind := reflect.TypeOf(fn).Kind()
 
-            if fnType.Kind() == reflect.Func {
+            if fnKind == reflect.Func {
                 newHandler = func(e *Event) {
                     this.funcReflectListen(fn, e)
                 }
-            } else if fnType.Kind() == reflect.Struct || fnType.Kind() == reflect.Pointer {
+            } else if fnKind == reflect.Struct || fnKind == reflect.Pointer {
                 newHandler = func(e *Event) {
                     this.structHandleReflectListen(fn, e)
                 }
