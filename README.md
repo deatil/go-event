@@ -63,16 +63,16 @@ type TestEventStructData struct {
 }
 
 func TestEventStruct(data TestEventStructData, name any) {
-    logger.New().Info("TestEventStruct: ")
-    logger.New().Info(data.Data)
-    logger.New().Info(name)
+    fmt.Println("TestEventStruct: ")
+    fmt.Println(data.Data)
+    fmt.Println(name)
 }
 
 type TestEventStructHandle struct {}
 
 func (this *TestEventStructHandle) Handle(data any) {
-    logger.New().Info("7-TestEventStructHandle: ")
-    logger.New().Info(data)
+    fmt.Println("TestEventStructHandle: ")
+    fmt.Println(data)
 }
 
 func main() {
