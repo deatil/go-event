@@ -7,12 +7,12 @@ import(
 )
 
 // 匹配检测
-func MatchTypeName(typeName string, current string) bool {
+func matchTypeName(typeName string, current string) bool {
     if strings.Index(typeName, "*") == -1 {
         return typeName == current
     }
 
-    typeName = strings.Replace(typeName, "*", "([0-9a-zA-Z-_.:])*", -1)
+    typeName = strings.Replace(typeName, "*", `([0-9a-zA-Z-_.:])*`, -1)
 
     result, _ := regexp.MatchString("^" + typeName, current)
     if !result {
@@ -23,7 +23,7 @@ func MatchTypeName(typeName string, current string) bool {
 }
 
 // 获取类型唯一字符串
-func GetTypeKey(p reflect.Type) (key string) {
+func getTypeKey(p reflect.Type) (key string) {
     if p.Kind() == reflect.Pointer {
         p = p.Elem()
         key = "*"
@@ -39,21 +39,21 @@ func GetTypeKey(p reflect.Type) (key string) {
 }
 
 // 反射获取结构体名称
-func GetStructName(data any) string {
+func getStructName(data any) string {
     p := reflect.TypeOf(data)
 
-    return GetTypeKey(p)
+    return getTypeKey(p)
 }
 
 // 格式化名称
-func FormatName(name any) string {
+func formatName(name any) string {
     if n, ok := name.(string); ok {
         return n
     }
 
     nameKind := reflect.TypeOf(name).Kind()
     if nameKind == reflect.Struct || nameKind == reflect.Pointer {
-        newName := GetStructName(name)
+        newName := getStructName(name)
 
         return newName
     }
@@ -62,7 +62,7 @@ func FormatName(name any) string {
 }
 
 // 把变量转换成反射类型
-func ConvertToTypes(args ...any) []reflect.Type {
+func convertToTypes(args ...any) []reflect.Type {
     types := make([]reflect.Type, 0)
 
     for _, arg := range args {
@@ -73,7 +73,7 @@ func ConvertToTypes(args ...any) []reflect.Type {
 }
 
 // 解析结构体的tag
-func ParseStructTag(rawTag reflect.StructTag) map[string][]string {
+func parseStructTag(rawTag reflect.StructTag) map[string][]string {
     results := make(map[string][]string, 0)
 
     tags := strings.Split(string(rawTag), " ")

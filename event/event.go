@@ -6,14 +6,25 @@ import (
 )
 
 // 监听器函数
+// EventHandler func
 type EventHandler = func(*Event)
 
 // 监听器
+// Event Listener
 type EventListener struct {
     Handler EventHandler
 }
 
+// 创建监听器
+// New Event Listener
+func NewEventListener(h EventHandler) *EventListener {
+    l := new(EventListener)
+    l.Handler = h
+    return l
+}
+
 // 事件调度器中存放的单元
+// Event Saver list
 type EventSaver struct {
     // 类型
     Type      string
@@ -23,6 +34,7 @@ type EventSaver struct {
 }
 
 // 事件调度接口
+// EventDispatcher interface
 type IEventDispatcher interface {
     // 事件监听
     AddEventListener(string, *EventListener)
@@ -40,29 +52,41 @@ type IEventDispatcher interface {
     HasEventListener(string, *EventListener) bool
 
     // 事件派发
-    DispatchEvent(*Event) bool
+    DispatchEvent(*Event)
 }
 
 // =====
 
 /**
- * 事件
+ * 事件 / Event
  *
  * @create 2021-8-20
  * @author deatil
  */
 type Event struct {
-    // 事件触发实例
+    // 事件触发实例 / target struct
     Target IEventDispatcher
 
-    // 事件类型
+    // 事件类型 / type
     Type string
 
-    // 事件携带数据源
+    // 事件携带数据源 / event data
     Object any
 }
 
+// 创建事件
+// New Event
+func NewEvent(eventType string, object any) *Event {
+    e := &Event{
+        Type:   eventType,
+        Object: object,
+    }
+
+    return e
+}
+
 // 克隆事件
+// Clone Event
 func (this *Event) Clone() *Event {
     e := new(Event)
     e.Type = this.Type
@@ -72,6 +96,7 @@ func (this *Event) Clone() *Event {
 }
 
 // 返回字符
+// return string
 func (this *Event) String() string {
     return fmt.Sprintf("Event Type %v", this.Type)
 }
@@ -79,11 +104,22 @@ func (this *Event) String() string {
 // =====
 
 // 事件调度器
+// Event Dispatcher
 type EventDispatcher struct {
     savers []*EventSaver
 }
 
+// 创建事件派发器
+// New Event Dispatcher
+func NewEventDispatcher() *EventDispatcher {
+    dispatcher := new(EventDispatcher)
+    dispatcher.savers = make([]*EventSaver, 0)
+
+    return dispatcher
+}
+
 // 事件调度器添加事件
+// Add Event Listener
 func (this *EventDispatcher) AddEventListener(eventType string, listener *EventListener) {
     for _, saver := range this.savers {
         if saver.Type == eventType {
@@ -101,6 +137,7 @@ func (this *EventDispatcher) AddEventListener(eventType string, listener *EventL
 }
 
 // 移除事件
+// Remove Event
 func (this *EventDispatcher) RemoveEvent(eventType string) bool {
     for i, saver := range this.savers {
         if saver.Type == eventType {
@@ -114,6 +151,7 @@ func (this *EventDispatcher) RemoveEvent(eventType string) bool {
 }
 
 // 是否有定义事件
+// if has Event return true or return false
 func (this *EventDispatcher) HasEvent(eventType string) bool {
     for _, saver := range this.savers {
         if saver.Type == eventType {
@@ -125,6 +163,7 @@ func (this *EventDispatcher) HasEvent(eventType string) bool {
 }
 
 // 事件调度器移除某个监听
+// Remove Listen
 func (this *EventDispatcher) RemoveEventListener(eventType string, listener *EventListener) bool {
     for _, saver := range this.savers {
         if saver.Type == eventType {
@@ -141,6 +180,7 @@ func (this *EventDispatcher) RemoveEventListener(eventType string, listener *Eve
 }
 
 // 是否存在
+// if has Listen return true or return false
 func (this *EventDispatcher) HasEventListener(eventType string, listener *EventListener) bool {
     for _, saver := range this.savers {
         if saver.Type == eventType {
@@ -156,23 +196,21 @@ func (this *EventDispatcher) HasEventListener(eventType string, listener *EventL
 }
 
 // 事件调度器派发事件
-func (this *EventDispatcher) DispatchEvent(event *Event) bool {
+// Dispatch Event
+func (this *EventDispatcher) DispatchEvent(event *Event) {
     for _, saver := range this.savers {
-        if MatchTypeName(event.Type, saver.Type) {
+        if matchTypeName(event.Type, saver.Type) {
             for _, listener := range saver.Listeners {
                 event.Target = this
 
                 listener.Handler(event)
             }
-
-            return true
         }
     }
-
-    return false
 }
 
 // 事件类型列表
+// Event name list
 func (this *EventDispatcher) EventNames() []string {
     names := make([]string, 0)
 
@@ -184,6 +222,7 @@ func (this *EventDispatcher) EventNames() []string {
 }
 
 // 事件类型对应监听列表
+// list Event Listeners
 func (this *EventDispatcher) EventListeners(eventType string) []*EventListener {
     for _, saver := range this.savers {
         if saver.Type == eventType {
@@ -192,31 +231,4 @@ func (this *EventDispatcher) EventListeners(eventType string) []*EventListener {
     }
 
     return nil
-}
-
-// =====
-
-// 创建事件派发器
-func NewEventDispatcher() *EventDispatcher {
-    dispatcher := new(EventDispatcher)
-    dispatcher.savers = make([]*EventSaver, 0)
-
-    return dispatcher
-}
-
-// 创建监听器
-func NewEventListener(h EventHandler) *EventListener {
-    l := new(EventListener)
-    l.Handler = h
-    return l
-}
-
-// 创建事件
-func NewEvent(eventType string, object any) *Event {
-    e := &Event{
-        Type:   eventType,
-        Object: object,
-    }
-
-    return e
 }

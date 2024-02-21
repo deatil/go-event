@@ -6,21 +6,26 @@ import(
     "reflect"
 )
 
+// 默认事件
+// default new events
+var defaultEvents = NewEvents()
+
 /**
- * 事件
+ * 事件 / Events
  *
  * @create 2022-11-20
  * @author deatil
  */
 type Events struct {
-    // 锁定
+    // 读写锁 / read or write Mutex
     mu sync.RWMutex
 
-    // 调度器
+    // 调度器 / dispatcher struct
     dispatcher *EventDispatcher
 }
 
 // 构造函数
+// New Events
 func NewEvents() *Events {
     event := &Events{
         dispatcher: NewEventDispatcher(),
@@ -30,11 +35,12 @@ func NewEvents() *Events {
 }
 
 // 监听
+// Listen event
 func (this *Events) Listen(name any, handler any) {
     this.mu.Lock()
     defer this.mu.Unlock()
 
-    newName := FormatName(name)
+    newName := formatName(name)
     if newName != "" {
         listener := this.formatEventHandler(handler)
 
@@ -42,7 +48,14 @@ func (this *Events) Listen(name any, handler any) {
     }
 }
 
+// 监听
+// Listen event
+func Listen(name any, handler any) {
+    defaultEvents.Listen(name, handler)
+}
+
 // 注册事件订阅者
+// add Subscribe
 func (this *Events) Subscribe(subscribers ...any) *Events {
     if len(subscribers) == 0 {
         return this
@@ -60,7 +73,14 @@ func (this *Events) Subscribe(subscribers ...any) *Events {
     return this
 }
 
+// 注册事件订阅者
+// add Subscribe
+func Subscribe(subscribers ...any) {
+    defaultEvents.Subscribe(subscribers...)
+}
+
 // 自动注册事件观察者
+// add observer
 // observer 观察者
 // prefix   事件名前缀
 func (this *Events) Observe(observer any, prefix string) *Events {
@@ -88,7 +108,14 @@ func (this *Events) Observe(observer any, prefix string) *Events {
     return this
 }
 
+// 注册事件观察者
+// add observer
+func Observe(observer any, prefix string) {
+    defaultEvents.Observe(observer, prefix)
+}
+
 // 事件调度
+// Dispatch Event
 func (this *Events) Dispatch(name any, object ...any) bool {
     this.mu.RLock()
     defer this.mu.RUnlock()
@@ -104,9 +131,10 @@ func (this *Events) Dispatch(name any, object ...any) bool {
         newName = n
     } else {
         // 为结构体时
+        // when Struct
         nameKind := reflect.TypeOf(name).Kind()
         if nameKind == reflect.Struct || nameKind == reflect.Pointer {
-            newName = GetStructName(name)
+            newName = getStructName(name)
             eventObject = name
         }
     }
@@ -117,15 +145,24 @@ func (this *Events) Dispatch(name any, object ...any) bool {
 
     newEvent := NewEvent(newName, eventObject)
 
-    return this.dispatcher.DispatchEvent(newEvent)
+    this.dispatcher.DispatchEvent(newEvent)
+
+    return true
+}
+
+// 事件调度
+// Dispatch Event
+func Dispatch(name any, object ...any) bool {
+    return defaultEvents.Dispatch(name, object...)
 }
 
 // 移除
+// Remove Event
 func (this *Events) RemoveEvent(name any) bool {
     this.mu.RLock()
     defer this.mu.RUnlock()
 
-    newName := FormatName(name)
+    newName := formatName(name)
     if newName == "" {
         return false
     }
@@ -133,12 +170,19 @@ func (this *Events) RemoveEvent(name any) bool {
     return this.dispatcher.RemoveEvent(newName)
 }
 
+// 移除
+// Remove Event
+func RemoveEvent(name any) bool {
+    return defaultEvents.RemoveEvent(name)
+}
+
 // 判断存在
+// if has Event return true or return false
 func (this *Events) HasEvent(name any) bool {
     this.mu.RLock()
     defer this.mu.RUnlock()
 
-    newName := FormatName(name)
+    newName := formatName(name)
     if newName == "" {
         return false
     }
@@ -146,12 +190,19 @@ func (this *Events) HasEvent(name any) bool {
     return this.dispatcher.HasEvent(newName)
 }
 
+// 判断存在
+// if has Event return true or return false
+func HasEvent(name any) bool {
+    return defaultEvents.HasEvent(name)
+}
+
 // 移除
+// Remove Listen
 func (this *Events) RemoveListen(name any, handler any) bool {
     this.mu.RLock()
     defer this.mu.RUnlock()
 
-    newName := FormatName(name)
+    newName := formatName(name)
     if newName == "" {
         return false
     }
@@ -161,12 +212,19 @@ func (this *Events) RemoveListen(name any, handler any) bool {
     return this.dispatcher.RemoveEventListener(newName, listener)
 }
 
+// 移除
+// Remove Listen
+func RemoveListen(name any, handler any) bool {
+    return defaultEvents.RemoveListen(name, handler)
+}
+
 // 判断存在
+// if has Listen return true or return false
 func (this *Events) HasListen(name any, handler any) bool {
     this.mu.RLock()
     defer this.mu.RUnlock()
 
-    newName := FormatName(name)
+    newName := formatName(name)
     if newName == "" {
         return false
     }
@@ -176,7 +234,14 @@ func (this *Events) HasListen(name any, handler any) bool {
     return this.dispatcher.HasEventListener(newName, listener)
 }
 
+// 判断存在
+// if has Listen return true or return false
+func HasListen(name any, handler any) bool {
+    return defaultEvents.HasListen(name, handler)
+}
+
 // 事件列表
+// Event name list
 func (this *Events) EventNames() []string {
     this.mu.RLock()
     defer this.mu.RUnlock()
@@ -184,12 +249,19 @@ func (this *Events) EventNames() []string {
     return this.dispatcher.EventNames()
 }
 
+// 事件列表
+// Event name list
+func EventNames() []string {
+    return defaultEvents.EventNames()
+}
+
 // 事件对应监听列表
+// list Event Listeners
 func (this *Events) EventListeners(name any) []*EventListener {
     this.mu.RLock()
     defer this.mu.RUnlock()
 
-    newName := FormatName(name)
+    newName := formatName(name)
     if newName == "" {
         return nil
     }
@@ -197,14 +269,28 @@ func (this *Events) EventListeners(name any) []*EventListener {
     return this.dispatcher.EventListeners(newName)
 }
 
+// 事件对应监听列表
+// list Event Listeners
+func EventListeners(name any) []*EventListener {
+    return defaultEvents.EventListeners(name)
+}
+
 // 重置
+// Reset Event
 func (this *Events) Reset() *Events {
     this.dispatcher = NewEventDispatcher()
 
     return this
 }
 
-// 监听
+// 重置
+// Reset Event
+func Reset() {
+    defaultEvents.Reset()
+}
+
+// 订阅监听
+// subscribe Listen
 func (this *Events) subscribeListen(es EventSubscribe, e *Event) {
     fn := es.Method.Func
 
@@ -218,14 +304,14 @@ func (this *Events) subscribeListen(es EventSubscribe, e *Event) {
 
     switch numIn {
         case 2:
-            if GetTypeKey(fnType.In(1)) == GetStructName(&Event{}) {
+            if getTypeKey(fnType.In(1)) == getStructName(&Event{}) {
                 params = append(params, reflect.ValueOf(e))
             } else {
                 dataValue := this.convertTo(fnType.In(1), e.Object)
                 params = append(params, dataValue)
             }
         case 3:
-            if GetTypeKey(fnType.In(1)) == GetStructName(&Event{}) {
+            if getTypeKey(fnType.In(1)) == getStructName(&Event{}) {
                 params = append(params, reflect.ValueOf(e))
             } else {
                 dataValue := this.convertTo(fnType.In(1), e.Object)
@@ -242,6 +328,7 @@ func (this *Events) subscribeListen(es EventSubscribe, e *Event) {
 }
 
 // 函数反射监听
+// listen func
 func (this *Events) funcReflectListen(fn any, e *Event) {
     fnObject := reflect.ValueOf(fn)
 
@@ -273,6 +360,7 @@ func (this *Events) funcReflectListen(fn any, e *Event) {
 }
 
 // 结构体方法反射监听
+// listen struct
 func (this *Events) structHandleReflectListen(fn any, e *Event) {
     method := "Handle"
 
@@ -289,6 +377,7 @@ func (this *Events) structHandleReflectListen(fn any, e *Event) {
 }
 
 // 格式化
+// format Event Handler
 func (this *Events) formatEventHandler(handler any) *EventListener {
     var newHandler EventHandler
 
@@ -337,20 +426,22 @@ func (this *Events) formatEventHandler(handler any) *EventListener {
     return listener
 }
 
-// 格式化
-func (this *Events) convertTo(src reflect.Type, dst any) reflect.Value {
-    dataKey := GetTypeKey(src)
+// 转换类型
+// src convert type to new typ
+func (this *Events) convertTo(typ reflect.Type, src any) reflect.Value {
+    dataKey := getTypeKey(typ)
 
-    fieldType := reflect.TypeOf(dst)
-    if !fieldType.ConvertibleTo(src) {
-        return reflect.New(src).Elem()
+    fieldType := reflect.TypeOf(src)
+    if !fieldType.ConvertibleTo(typ) {
+        return reflect.New(typ).Elem()
     }
 
-    fieldValue := reflect.ValueOf(dst)
+    fieldValue := reflect.ValueOf(src)
 
-    if dataKey != GetTypeKey(fieldType) {
+    if dataKey != getTypeKey(fieldType) {
         // 转换类型
-        fieldValue = fieldValue.Convert(src)
+        // Convert type
+        fieldValue = fieldValue.Convert(typ)
     }
 
     return fieldValue
