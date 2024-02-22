@@ -1,16 +1,19 @@
-## go Event or Event Subscribe
+## go-event
 
 <p align="center">
-<a href="https://pkg.go.dev/github.com/deatil/go-event"><img src="https://pkg.go.dev/badge/deatil/go-event.svg" alt="Go Reference"></a>
-<a href="https://codecov.io/gh/deatil/go-event" >
+<a href="https://pkg.go.dev/github.com/deatil/go-event" target="_blank">
+ <img src="https://pkg.go.dev/badge/deatil/go-event.svg" alt="Go Reference">
+</a>
+<a href="https://app.codecov.io/gh/deatil/go-event" target="_blank">
  <img src="https://codecov.io/gh/deatil/go-event/graph/badge.svg?token=SS2Z1IY0XL"/>
 </a>
 <img src="https://goreportcard.com/badge/github.com/deatil/go-event" />
 </p>
 
+
 ### Desc
 
-*  go Event or Event Subscribe pkg
+*  go-event is a go event or event'subscribe pkg
 
 [中文](README_CN.md) | English
 
@@ -99,12 +102,12 @@ func main() {
 
     // ==================
 
-    // Subscribe
+    // Subscribe struct
     event.Subscribe(&TestEvent{})
     event.Subscribe(TestEventPrefix{})
     event.Subscribe(&TestEventSubscribe{})
 
-    // Subscribe call
+    // call listens
     event.Dispatch("TestEvent", eventData)
     event.Dispatch("TestEventName", eventData)
     event.Dispatch("ABCTestEvent", eventData)
@@ -112,10 +115,10 @@ func main() {
 
     // ==================
 
-    // Listen
+    // listen struct data
     event.Listen(TestEventStructData{}, TestEventStruct)
 
-    // Dispatch
+    // call
     eventData2 := "index data"
     event.Dispatch(TestEventStructData{
         Data: eventData2,
@@ -123,10 +126,10 @@ func main() {
 
     // ==================
 
-    // Listen
+    // listen struct and use struct Handle func to call
     event.Listen("TestEventStructHandle", &TestEventStructHandle{})
 
-    // Dispatch
+    // call
     event.Dispatch("TestEventStructHandle", eventData)
 }
 

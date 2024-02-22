@@ -1,6 +1,7 @@
 package event
 
-import(
+import (
+	"fmt"
 	"reflect"
 	"testing"
 )
@@ -16,223 +17,310 @@ func assertDeepEqualT(t *testing.T) func(any, any, string) {
 func Test_Listen(t *testing.T) {
 	eq := assertDeepEqualT(t)
 
-    checkData := "index data"
-    var eventData any
+	checkData := "index data"
+	var eventData, eventData_2 any
 
-    Listen("data.test", func(data any) {
-        eventData = data
-    })
-    Dispatch("data.test", checkData)
+	Listen("data.test", func(data any) {
+		eventData = data
+	})
+	Listen("data.test", func(data any) {
+		eventData_2 = data
+	})
+	Dispatch("data.test", checkData)
 
-    eq(eventData, checkData, "Listen")
+	eq(eventData, checkData, "Listen")
+	eq(eventData_2, checkData, "Listen")
 
-    // ==========
+	// ==========
 
-    checkData2 := "index data 222"
-    var eventData2 any
+	checkData2 := "index data 222"
+	var eventData2 any
 
-    ev := NewEvents()
+	ev := NewEvents()
 
-    ev.Listen("data.test111111", func(data any) {
-        eventData2 = data
-    })
-    ev.Dispatch("data.test111111", checkData2)
+	ev.Listen("data.test111111", func(data any) {
+		eventData2 = data
+	})
+	ev.Dispatch("data.test111111", checkData2)
 
-    eq(eventData2, checkData2, "Listen2")
+	eq(eventData2, checkData2, "Listen2")
 
-    // ==========
+	// ==========
 
-    checkData3 := "index data many"
-    var eventData3, eventData3_1, eventData3_2 any
+	checkData3 := "index data many"
+	var eventData3, eventData3_1, eventData3_2 any
 
-    Listen("many.test1", func(data any) {
-        eventData3 = data
-    })
-    Listen("many.test2", func(data any) {
-        eventData3_1 = data
-    })
-    Listen("many.test3", func(data any) {
-        eventData3_2 = data
-    })
-    Dispatch("many.*", checkData3)
+	Listen("many.test1", func(data any) {
+		eventData3 = data
+	})
+	Listen("many.test2", func(data any) {
+		eventData3_1 = data
+	})
+	Listen("many.test3", func(data any) {
+		eventData3_2 = data
+	})
+	Dispatch("many.*", checkData3)
 
-    eq(eventData3, checkData3, "Listen eventData3")
-    eq(eventData3_1, checkData3, "Listen eventData3_1")
-    eq(eventData3_2, checkData3, "Listen eventData3_2")
+	eq(eventData3, checkData3, "Listen eventData3")
+	eq(eventData3_1, checkData3, "Listen eventData3_1")
+	eq(eventData3_2, checkData3, "Listen eventData3_2")
+}
+
+func Test_RemoveAndHasEvent(t *testing.T) {
+	eq := assertDeepEqualT(t)
+
+	checkData := "index data Test_RemoveAndHasEvent"
+	var eventData, eventData_2 any
+
+	Listen("remove.test", func(data any) {
+		eventData = data
+	})
+	Listen("remove.test2", func(data any) {
+		eventData_2 = data
+	})
+
+	eq(HasEvent("remove.test2"), true, "Test_RemoveAndHasEvent HasEvent 0")
+
+	RemoveEvent("remove.test2")
+
+	Dispatch("remove.test", checkData)
+	Dispatch("remove.test2", checkData)
+
+	eq(eventData, checkData, "Test_RemoveAndHasEvent")
+	eq(eventData_2, nil, "Test_RemoveAndHasEvent")
+
+	eq(HasEvent("remove.test"), true, "Test_RemoveAndHasEvent HasEvent 1")
+	eq(HasEvent("remove.test2"), false, "Test_RemoveAndHasEvent HasEvent 2")
+
+	evnames := EventNames()
+	eq(fmt.Sprintf("%v", evnames), "[data.test many.test1 many.test2 many.test3 remove.test]", "Test_RemoveAndHasEvent EventNames")
+
+	// ========
+
+	checkData2 := "index data Test_RemoveAndHasEvent 222"
+	var eventData2, eventData2_2 any
+
+	ev := NewEvents()
+
+	ev.Listen("remove2.test", func(data any) {
+		eventData2 = data
+	})
+	ev.Listen("remove2.test2", func(data any) {
+		eventData2_2 = data
+	})
+
+	eq(ev.HasEvent("remove2.test2"), true, "Test_RemoveAndHasEvent2 HasEvent 0")
+
+	ev.RemoveEvent("remove2.test2")
+
+	ev.Dispatch("remove2.test", checkData2)
+	ev.Dispatch("remove2.test2", checkData2)
+
+	eq(eventData2, checkData2, "Test_RemoveAndHasEvent2")
+	eq(eventData2_2, nil, "Test_RemoveAndHasEvent2 nil")
+
+	eq(ev.HasEvent("remove2.test"), true, "Test_RemoveAndHasEvent2 HasEvent 1")
+	eq(ev.HasEvent("remove2.test2"), false, "Test_RemoveAndHasEvent2 HasEvent 2")
 }
 
 var testEventRes map[string]any
 
 func init() {
-    testEventRes = make(map[string]any)
+	testEventRes = make(map[string]any)
 }
 
-type TestEvent struct {}
+type TestEvent struct{}
 
 func (this *TestEvent) OnTestEvent(data any) {
-    testEventRes["TestEvent_OnTestEvent"] = data
+	testEventRes["TestEvent_OnTestEvent"] = data
 }
 
 func (this *TestEvent) OnTestEventName(data any, name string) {
-    testEventRes["TestEvent_OnTestEventName"] = data
-    testEventRes["TestEvent_OnTestEventNameName"] = name
+	testEventRes["TestEvent_OnTestEventName"] = data
+	testEventRes["TestEvent_OnTestEventNameName"] = name
 }
 
-type TestEventPrefix struct {}
+type TestEventPrefix struct{}
 
 func (this TestEventPrefix) EventPrefix() string {
-    return "ABC"
+	return "ABC"
 }
 
 func (this TestEventPrefix) OnTestEvent(data any) {
-    testEventRes["TestEventPrefix_OnTestEvent"] = data
+	testEventRes["TestEventPrefix_OnTestEvent"] = data
 }
 
-type TestEventSubscribe struct {}
+type TestEventPrefix2 struct{}
+
+func (this TestEventPrefix2) OnTestEvent(data any) {
+	testEventRes["TestEventPrefix2_OnTestEvent"] = data
+}
+
+type TestEventSubscribe struct{}
 
 func (this *TestEventSubscribe) Subscribe(e *Events) {
-    e.Listen("TestEventSubscribe", this.OnTestEvent)
+	e.Listen("TestEventSubscribe", this.OnTestEvent)
 }
 
 func (this *TestEventSubscribe) OnTestEvent(data any) {
-    testEventRes["TestEventSubscribe_OnTestEvent"] = data
+	testEventRes["TestEventSubscribe_OnTestEvent"] = data
 }
 
 type TestEventStructData struct {
-    Data string
+	Data string
 }
 
 func EventStructTest(data TestEventStructData, name any) {
-    testEventRes["EventStructTest"] = data.Data
-    testEventRes["EventStructTest_Name"] = name
+	testEventRes["EventStructTest"] = data.Data
+	testEventRes["EventStructTest_Name"] = name
 }
 
-type TestEventStructHandle struct {}
+type TestEventStructHandle struct{}
 
 func (this *TestEventStructHandle) Handle(data any) {
-    testEventRes["TestEventStructHandle_Handle"] = data
+	testEventRes["TestEventStructHandle_Handle"] = data
 }
 
 func Test_Subscribe(t *testing.T) {
 	eq := assertDeepEqualT(t)
 
-    checkData := "index data Test_Subscribe"
+	checkData := "index data Test_Subscribe"
 
-    Subscribe(&TestEvent{})
-    Dispatch("TestEvent", checkData)
-    Dispatch("TestEventName", checkData)
+	Subscribe(&TestEvent{})
+	Dispatch("TestEvent", checkData)
+	Dispatch("TestEventName", checkData)
 
-    eq(testEventRes["TestEvent_OnTestEvent"], checkData, "Subscribe 1")
-    eq(testEventRes["TestEvent_OnTestEventName"], checkData, "Subscribe 2")
-    eq(testEventRes["TestEvent_OnTestEventNameName"], "TestEventName", "Subscribe 2")
+	eq(testEventRes["TestEvent_OnTestEvent"], checkData, "Subscribe 1")
+	eq(testEventRes["TestEvent_OnTestEventName"], checkData, "Subscribe 2")
+	eq(testEventRes["TestEvent_OnTestEventNameName"], "TestEventName", "Subscribe 2")
 
-    // =======
+	// =======
 
-    ev := NewEvents()
+	ev := NewEvents()
 
-    checkData2 := "index data Test_Subscribe 2"
+	checkData2 := "index data Test_Subscribe 2"
 
-    ev.Subscribe(&TestEvent{})
-    ev.Dispatch("TestEvent", checkData2)
-    ev.Dispatch("TestEventName", checkData2)
+	ev.Subscribe(&TestEvent{})
+	ev.Dispatch("TestEvent", checkData2)
+	ev.Dispatch("TestEventName", checkData2)
 
-    eq(testEventRes["TestEvent_OnTestEvent"], checkData2, "Subscribe 2-1")
-    eq(testEventRes["TestEvent_OnTestEventName"], checkData2, "Subscribe 2-2")
-    eq(testEventRes["TestEvent_OnTestEventNameName"], "TestEventName", "Subscribe Name 2-2")
+	eq(testEventRes["TestEvent_OnTestEvent"], checkData2, "Subscribe 2-1")
+	eq(testEventRes["TestEvent_OnTestEventName"], checkData2, "Subscribe 2-2")
+	eq(testEventRes["TestEvent_OnTestEventNameName"], "TestEventName", "Subscribe Name 2-2")
 }
 
 func Test_Subscribe_Prefix(t *testing.T) {
 	eq := assertDeepEqualT(t)
 
-    checkData := "index data Test_Subscribe_Prefix"
+	checkData := "index data Test_Subscribe_Prefix"
 
-    Subscribe(TestEventPrefix{})
-    Dispatch("ABCTestEvent", checkData)
+	Subscribe(TestEventPrefix{})
+	Dispatch("ABCTestEvent", checkData)
 
-    eq(testEventRes["TestEventPrefix_OnTestEvent"], checkData, "Subscribe 1")
+	eq(testEventRes["TestEventPrefix_OnTestEvent"], checkData, "Subscribe 1")
 
-    // =======
+	// =======
 
-    ev := NewEvents()
+	ev := NewEvents()
 
-    checkData2 := "index data Test_Subscribe_Prefix 2"
+	checkData2 := "index data Test_Subscribe_Prefix 2"
 
-    ev.Subscribe(TestEventPrefix{})
-    ev.Dispatch("ABCTestEvent", checkData2)
+	ev.Subscribe(TestEventPrefix{})
+	ev.Dispatch("ABCTestEvent", checkData2)
 
-    eq(testEventRes["TestEventPrefix_OnTestEvent"], checkData2, "Subscribe 2-1")
+	eq(testEventRes["TestEventPrefix_OnTestEvent"], checkData2, "Subscribe 2-1")
+
+	// =======
+
+	checkData22 := "index data Test_Subscribe_Prefix2 2"
+
+	Observe("awefr", "ACS")
+
+	Observe(TestEventPrefix2{}, "ACS")
+	Dispatch("ACSTestEvent", checkData22)
+
+	eq(testEventRes["TestEventPrefix2_OnTestEvent"], checkData22, "Observe TestEventPrefix2 2-1")
 }
 
 func Test_EventSubscribe(t *testing.T) {
 	eq := assertDeepEqualT(t)
 
-    checkData := "index data Test_EventSubscribe"
+	checkData := "index data Test_EventSubscribe"
 
-    Subscribe(&TestEventSubscribe{})
-    Dispatch("TestEventSubscribe", checkData)
+	Subscribe(&TestEventSubscribe{})
+	Dispatch("TestEventSubscribe", checkData)
 
-    eq(testEventRes["TestEventSubscribe_OnTestEvent"], checkData, "Subscribe 1")
+	eq(testEventRes["TestEventSubscribe_OnTestEvent"], checkData, "Subscribe 1")
 
-    // =======
+	// =======
 
-    ev := NewEvents()
+	ev := NewEvents()
 
-    checkData2 := "index data Test_EventSubscribe 2"
+	checkData2 := "index data Test_EventSubscribe 2"
 
-    ev.Subscribe(&TestEventSubscribe{})
-    ev.Dispatch("TestEventSubscribe", checkData2)
+	ev.Subscribe(&TestEventSubscribe{})
+	ev.Dispatch("TestEventSubscribe", checkData2)
 
-    eq(testEventRes["TestEventSubscribe_OnTestEvent"], checkData2, "Subscribe 2-1")
+	eq(testEventRes["TestEventSubscribe_OnTestEvent"], checkData2, "Subscribe 2-1")
 }
 
 func Test_EventStruct(t *testing.T) {
 	eq := assertDeepEqualT(t)
 
-    checkData := "index data Test_EventStruct"
+	checkData := "index data Test_EventStruct"
 
-    Listen(TestEventStructData{}, EventStructTest)
-    Dispatch(TestEventStructData{
-        Data: checkData,
-    })
+	Listen(TestEventStructData{}, EventStructTest)
+	Dispatch(TestEventStructData{
+		Data: checkData,
+	})
 
-    eq(testEventRes["EventStructTest"], checkData, "Subscribe 1")
-    eq(testEventRes["EventStructTest_Name"], "github.com/deatil/go-event/event.TestEventStructData", "Subscribe Name 2-2")
+	eq(testEventRes["EventStructTest"], checkData, "Subscribe 1")
+	eq(testEventRes["EventStructTest_Name"], "github.com/deatil/go-event/event.TestEventStructData", "Subscribe Name 2-2")
 
-    // =======
+	// =======
 
-    ev := NewEvents()
+	ev := NewEvents()
 
-    checkData2 := "index data Test_EventStruct 2"
+	checkData2 := "index data Test_EventStruct 2"
 
-    ev.Listen(TestEventStructData{}, EventStructTest)
-    ev.Dispatch(TestEventStructData{
-        Data: checkData2,
-    })
+	ev.Listen(TestEventStructData{}, EventStructTest)
+	ev.Dispatch(TestEventStructData{
+		Data: checkData2,
+	})
 
-    eq(testEventRes["EventStructTest"], checkData2, "Subscribe 2-1")
-    eq(testEventRes["EventStructTest_Name"], "github.com/deatil/go-event/event.TestEventStructData", "Subscribe Name 2-2")
+	eq(testEventRes["EventStructTest"], checkData2, "Subscribe 2-1")
+	eq(testEventRes["EventStructTest_Name"], "github.com/deatil/go-event/event.TestEventStructData", "Subscribe Name 2-2")
 }
 
 func Test_EventStructHandle(t *testing.T) {
 	eq := assertDeepEqualT(t)
 
-    checkData := "index data Test_EventStructHandle"
+	checkData := "index data Test_EventStructHandle"
 
-    Listen("TestEventStructHandle", &TestEventStructHandle{})
-    Dispatch("TestEventStructHandle", checkData)
+	Listen("TestEventStructHandle", &TestEventStructHandle{})
+	Dispatch("TestEventStructHandle", checkData)
 
-    eq(testEventRes["TestEventStructHandle_Handle"], checkData, "Subscribe 1")
+	eq(testEventRes["TestEventStructHandle_Handle"], checkData, "Subscribe 1")
 
-    // =======
+	// =======
 
-    ev := NewEvents()
+	ev := NewEvents()
 
-    checkData2 := "index data Test_EventStructHandle 2"
+	checkData2 := "index data Test_EventStructHandle 2"
 
-    ev.Listen("TestEventStructHandle", &TestEventStructHandle{})
-    ev.Dispatch("TestEventStructHandle", checkData2)
+	ev.Listen("TestEventStructHandle", &TestEventStructHandle{})
+	ev.Dispatch("TestEventStructHandle", checkData2)
 
-    eq(testEventRes["TestEventStructHandle_Handle"], checkData2, "Subscribe 2-1")
+	eq(testEventRes["TestEventStructHandle_Handle"], checkData2, "Subscribe 2-1")
 }
 
+func Test_Event(t *testing.T) {
+	eq := assertDeepEqualT(t)
 
+	checkData := "index data Test_Event"
+
+	ev1 := NewEvent("data.test", checkData)
+	ev2 := ev1.Clone()
+
+	eq(ev2.String(), ev1.String(), "Test_Event")
+}
