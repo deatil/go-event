@@ -1,12 +1,8 @@
 ## go 事件及事件订阅
 
 <p align="center">
-<a href="https://pkg.go.dev/github.com/deatil/go-event" target="_blank">
- <img src="https://pkg.go.dev/badge/deatil/go-event.svg" alt="Go Reference">
-</a>
-<a href="https://app.codecov.io/gh/deatil/go-event" target="_blank">
- <img src="https://codecov.io/gh/deatil/go-event/graph/badge.svg?token=SS2Z1IY0XL"/>
-</a>
+<a href="https://pkg.go.dev/github.com/deatil/go-event" target="_blank"><img src="https://pkg.go.dev/badge/deatil/go-event.svg" alt="Go Reference" /></a>
+<a href="https://app.codecov.io/gh/deatil/go-event" target="_blank"><img src="https://codecov.io/gh/deatil/go-event/graph/badge.svg?token=SS2Z1IY0XL" /></a>
 <img src="https://goreportcard.com/badge/github.com/deatil/go-event" />
 </p>
 
